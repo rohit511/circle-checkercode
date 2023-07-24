@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Circularity Checker</title>
+    <style>
+        
+        #canvas {
+            border: 2px solid red;
+            cursor: crosshair;
+            
+        }
+       
+    </style>
+</head>
+
+<body>
+    <h1>Draw a figure and check its circularity!</h1>
+    <canvas id="canvas" width="400px" height="500px"></canvas>
+    <p>Similarity to a circle: <span id="circularity">0%</span></p>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const circularityElement = document.getElementById('circularity');
+
+        let drawnPoints = [];
+        let isDrawing = false;
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', endDrawing);
+
+        function startDrawing(event) {
+            isDrawing = true;
+            drawnPoints = [];
+        }
+
+        function draw(event) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX ;
+            const y = event.clientY ;
+            drawnPoints.push({ x, y });
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.moveTo(drawnPoints[0].x, drawnPoints[0].y);
+
+            for (let i = 1; i < drawnPoints.length; i++) {
+                ctx.lineTo(drawnPoints[i].x, drawnPoints[i].y);
+            }
+
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        function endDrawing() {
+            isDrawing = false;
+            const circularity = calculateCircularity(drawnPoints);
+            circularityElement.textContent = `${circularity.toFixed(2)}%`;
+            console.log(drawnpoints)
+        }
+
+        function calculateCircularity(points) {
+            if (points.length < 3) return 0;
+            console.log(points);
+
+            // Calculate the area of the drawn shape using Shoelace formula
+            let area = 0;
+            for (let i = 0; i < points.length; i++) {
+                const x1 = points[i].x;
+                const y1 = points[i].y;
+                const x2 = points[(i + 1) % points.length].x;
+                const y2 = points[(i + 1) % points.length].y;
+                area += (x1 * y2 - x2 * y1);
+            }
+            area = Math.abs(area) / 2;
+
+            // Calculate the perimeter of the drawn shape
+            let perimeter = 0;
+            for (let i = 0; i < points.length - 1; i++) {
+                const dx = points[i + 1].x - points[i].x;
+                const dy = points[i + 1].y - points[i].y;
+                perimeter += Math.sqrt(dx * dx + dy * dy);
+            }
+            perimeter += Math.sqrt(
+                (points[0].x - points[points.length - 1].x) ** 2 +
+                (points[0].y - points[points.length - 1].y) ** 2
+            );
+
+            // Calculate circularity as the ratio of circle area and shape area
+            const circleArea = Math.PI * (perimeter / (2 * Math.PI)) ** 2;
+            const circularity = (area / circleArea) * 100;
+
+            return circularity;
+        }
+    </script>
+</body>
+
+</html>
